@@ -27,23 +27,31 @@ export class InfraStack extends cdk.Stack {
 
     // CodeBuild
     const code_build = new codebuild.Project(this, 'codeBuild', {
-      projectName:  'example_2022_1129',
+      projectName: 'example_2022_1129',
+      description: 'test',
       source: codebuild.Source.codeCommit({
         repository: codecommit.Repository.fromRepositoryName(this, 'repo', 'example_2022_1129'),
         branchOrRef: 'refs/heads/master'
       }),
-      /*
-      buildSpec: codebuild.BuildSpec.fromObject({
-        version: '0.2',
-        phases: {
-          build: {
-            commands: [
-              'echo "Hello, CodeBuild!"',
-            ],
+      environment: {
+        buildImage: codebuild.LinuxBuildImage.STANDARD_4_0,
+        privileged: true,
+        environmentVariables: {
+            AWS_ACCOUNT_ID: {
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: this.account,
+            },
+            AWS_DEFAULT_REGION: {
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: this.region,
+            },
+            IMAGE_REPO_NAME1: {
+              type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
+              value: ecr_repo.repositoryName,
+            },
           },
         },
-      }),
-      */
+        buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
     });
 
 
