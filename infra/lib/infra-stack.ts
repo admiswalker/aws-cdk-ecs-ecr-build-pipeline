@@ -53,6 +53,51 @@ export class InfraStack extends cdk.Stack {
         },
         buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
     });
+    // IAM role for CodeBuild execution
+    /*
+    const iam_role_for_codebuild = new iam.Role(this, 'iam_role_for_codebuild', {
+      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentAdminPolicy'),
+      ],
+    });
+    */
+    /*
+    const iam_policy_for_codebuild = new iam.Policy(this, '', {
+
+    });
+    */
+    const new_managed_policy_for_codebuild = new iam.ManagedPolicy(this, 'codebuild_policy_example_2022_1129', {
+      document: iam.PolicyDocument.fromJson(
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+              {
+                  "Effect": "Allow",
+                  "Action": [
+                      "ecr:GetAuthorizationToken",
+                      "ecr:BatchCheckLayerAvailability",
+                      "ecr:GetDownloadUrlForLayer",
+                      "ecr:GetRepositoryPolicy",
+                      "ecr:DescribeRepositories",
+                      "ecr:ListImages",
+                      "ecr:DescribeImages",
+                      "ecr:BatchGetImage",
+                      "ecr:GetLifecyclePolicy",
+                      "ecr:GetLifecyclePolicyPreview",
+                      "ecr:ListTagsForResource",
+                      "ecr:DescribeImageScanFindings"
+                  ],
+                  "Resource": "*"
+              }
+          ]
+      })
+    });
+    code_build.role?.addManagedPolicy(new_managed_policy_for_codebuild)
+    //code_build.role?.attachInlinePolicy(iam_policy_for_codebuild)
+    //code_build.role?.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName(''))
+    //code_build.role?.addToPrincipalPolicy()
 
 
 
