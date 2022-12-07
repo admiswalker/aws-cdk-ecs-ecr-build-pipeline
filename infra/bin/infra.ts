@@ -13,5 +13,5 @@ const env = {
 const app = new cdk.App();
 new InfraStack(app, 'InfraStack', {
   prj_name: prj_name,
-  env: env
+  env: env,
 });

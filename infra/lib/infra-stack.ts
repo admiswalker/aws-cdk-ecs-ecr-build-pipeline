@@ -18,13 +18,14 @@ interface InfraStackProps extends StackProps {
 export class InfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: InfraStackProps) {
     super(scope, id, props);
-
+    
     // ECR repository
+    const ecr_repo_name: string = 'example_2022_1129_repo';
     const ecr_repo = new ecr.Repository(this, 'ecr', {
-      repositoryName: 'example_2022_1129_repo',
+      repositoryName: ecr_repo_name,
       removalPolicy: cdk.RemovalPolicy.DESTROY
-    })
-
+    });
+    
     // CodeBuild
     const code_build = new codebuild.Project(this, 'codeBuild', {
       projectName: 'example_2022_1129',
@@ -47,27 +48,13 @@ export class InfraStack extends cdk.Stack {
             },
             IMAGE_REPO_NAME1: {
               type: codebuild.BuildEnvironmentVariableType.PLAINTEXT,
-              value: ecr_repo.repositoryName,
+              value: ecr_repo_name,
             },
           },
         },
         buildSpec: codebuild.BuildSpec.fromSourceFilename('buildspec.yml'),
     });
     // IAM role for CodeBuild execution
-    /*
-    const iam_role_for_codebuild = new iam.Role(this, 'iam_role_for_codebuild', {
-      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
-        iam.ManagedPolicy.fromAwsManagedPolicyName('CloudWatchAgentAdminPolicy'),
-      ],
-    });
-    */
-    /*
-    const iam_policy_for_codebuild = new iam.Policy(this, '', {
-
-    });
-    */
     const new_managed_policy_for_codebuild = new iam.ManagedPolicy(this, 'codebuild_policy_example_2022_1129', {
       document: iam.PolicyDocument.fromJson(
         {
@@ -95,10 +82,28 @@ export class InfraStack extends cdk.Stack {
       })
     });
     code_build.role?.addManagedPolicy(new_managed_policy_for_codebuild)
-    //code_build.role?.attachInlinePolicy(iam_policy_for_codebuild)
-    //code_build.role?.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName(''))
-    //code_build.role?.addToPrincipalPolicy()
-
+    
+    // add policy to ECR to push docker image from CodeBuild
+    ecr_repo.addToResourcePolicy(
+      iam.PolicyStatement.fromJson(
+        {
+          "Sid": "new statement",
+          "Effect": "Allow",
+          "Principal": {
+            "AWS": code_build.role?.roleArn
+          },
+          "Action": [
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:CompleteLayerUpload",
+            "ecr:GetAuthorizationToken",
+            "ecr:InitiateLayerUpload",
+            "ecr:PutImage",
+            "ecr:UploadLayerPart"
+          ]
+        }
+      )
+    )
+    
 
 
 
