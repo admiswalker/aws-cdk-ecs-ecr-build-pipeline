@@ -1,0 +1,29 @@
+version: 0.2
+env:
+  variables:
+    version: "v0.98"
+#  secrets-manager:
+#    DOCKERHUB_USER: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:DOCKERHUB_USER-xxxxxx:DOCKERHUB_USER
+#    DOCKERHUB_PASS: arn:aws:secretsmanager:ap-northeast-1:123456789012:secret:DOCKERHUB_PASS-xxxxxx:DOCKERHUB_PASS
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+#      - echo Logging in to Docker Hub
+#      - echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Build and Run the Docker image
+      - docker build -f nginx/Dockerfile -t $IMAGE_REPO_NAME1:$version nginx/
+      - echo docker tag $IMAGE_REPO_NAME1:$version $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME1:$version
+      - docker tag $IMAGE_REPO_NAME1:$version $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME1:$version
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME1:$version
+      - printf '[{"name":"<container-definition>","imageUri":"%s"}]' $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME1:$version > artifacts.json
+artifacts:
+  files: artifacts.json
